@@ -31,7 +31,7 @@
             <input 
               type="text" 
               class="form-input" 
-              v-model="loginFormData.username"
+              v-model="loginFormData.userName"
               placeholder="请输入用户名/手机号/邮箱"
             >
           </div>
@@ -167,8 +167,12 @@
 
 <script setup>
 import { ref } from 'vue'
+import { userApi } from '../services/api.js'
+import { useUserStore } from '../stores/user.js'
 
-// 定义组件的属性
+// 获取用户状态存储实例
+const userStore = useUserStore()
+
 const props = defineProps({
   isVisible: {
     type: Boolean,
@@ -176,16 +180,14 @@ const props = defineProps({
   }
 })
 
-// 定义组件的事件
 const emit = defineEmits(['close', 'loginSuccess'])
 
-// 响应式数据
 const activeForm = ref('login') // 'login' or 'register'
 const activeRegisterTab = ref('phone') // 'phone' or 'email'
 
 // 登录表单数据
 const loginFormData = ref({
-  username: '',
+  userName: '',
   password: ''
 })
 
@@ -202,9 +204,6 @@ const emailRegisterFormData = ref({
   code: '',
   password: ''
 })
-
-// 后端域名
-const API_BASE_URL = 'https://dy68815.xin'
 
 // 关闭模态框
 const closeModal = () => {
@@ -234,19 +233,9 @@ const showEmailRegister = () => {
 // 发送验证码
 const sendVerificationCode = async (contact, type) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/users/register/${type}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({contact})
-    });
-    if (response.ok) {
-      alert(`验证码已发送至${type === 'phone' ? '手机' : '邮箱'}: ${contact}`)
-      return true;
-    } else {
-      throw new Error('Failed to send verification code');
-    }
+    const { data } = await userApi.sendVerificationCode(contact)
+    alert(`验证码已发送至${type === 'phone' ? '手机' : '邮箱'}: ${contact}`)
+    return true
   } catch (error) {
     console.error('发送验证码错误:', error)
     alert('网络错误，请稍后再试')
@@ -257,21 +246,11 @@ const sendVerificationCode = async (contact, type) => {
 // 注册用户
 const registerUser = async (data) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/users/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    if (response.ok) {
-      alert('注册成功！')
-      // 注册成功后自动登录
-      loginUser({username: data.phone || data.email, password: data.password})
-      return true;
-    } else {
-      throw new Error('Failed to register user');
-    }
+    const { data: responseData } = await userApi.register(data)
+    alert('注册成功！')
+    // 注册成功后自动登录
+    await loginUser({userName: data.phone || data.email, password: data.password})
+    return true
   } catch (error) {
     console.error('注册错误:', error)
     alert('网络错误，请稍后再试')
@@ -282,20 +261,10 @@ const registerUser = async (data) => {
 // 用户登录
 const loginUser = async (credentials) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/users/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(credentials)
-    });
-    if (response.ok) {
-      alert('登录成功！')
-      emit('loginSuccess')
-      return true;
-    } else {
-      throw new Error('Failed to login user');
-    }
+    const { data: userData } = await userApi.login(credentials)
+    alert(`登录成功！${userData.userName}`)
+    emit('loginSuccess', userData)
+    return true
   } catch (error) {
     console.error('登录错误:', error)
     alert('网络错误，请稍后再试')
@@ -413,24 +382,21 @@ const handleEmailRegisterSubmit = async () => {
 
 // 处理登录提交
 const handleLoginSubmit = async () => {
-  const { username, password } = loginFormData.value
+  const { userName, password } = loginFormData.value
   
-  if (!username || !password) {
+  if (!userName || !password) {
     alert('请填写用户名和密码')
     return
   }
   
-  const success = await loginUser({
-    username,
-    password
-  })
-  
-  if (success) {
-    closeModal()
+  if (await loginUser({
+    userName: userName,
+    password: password
+  })) {
+    closeModal();
   }
 }
 </script>
 
 <style scoped>
-/* 样式已移至styles.css，这里只需要引入即可 */
 </style>

@@ -1,8 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import Header from './components/Header.vue'
-import HomePage from './components/HomePage.vue'
-import AuthModal from './components/AuthModal.vue'
+import Header from './views/Header.vue'
+import LoginRegisterAuthModal from './views/LoginRegisterAuthModal.vue'
+import { useUserStore } from './stores/user'
+
+// 使用用户状态存储
+const userStore = useUserStore()
 
 // 响应式数据
 const isModalVisible = ref(false)
@@ -18,9 +21,9 @@ const hideModal = () => {
 }
 
 // 处理登录成功事件
-const handleLoginSuccess = () => {
+const handleLoginSuccess = (userData) => {
   hideModal()
-  // 可以在这里添加登录成功后的逻辑
+  userStore.setUser(userData)
   console.log('用户登录成功')
 }
 </script>
@@ -28,16 +31,20 @@ const handleLoginSuccess = () => {
 <template>
   <div id="app">
     <!-- 头部导航 -->
-    <Header @show-auth-modal="showModal" />
-    
-    <!-- 主页内容 -->
-    <HomePage />
-    
+    <Header
+      v-on:show-auth-modal="showModal"
+      v-model:is-logged-in="userStore.isLoggedIn"
+      v-model:user-name="userStore.getUserName"
+    />
+
+    <!-- 路由视图 -->
+    <router-view />
+
     <!-- 登录/注册模态框 -->
-    <AuthModal 
-      :is-visible="isModalVisible" 
-      @close="hideModal"
-      @login-success="handleLoginSuccess"
+    <LoginRegisterAuthModal
+      v-bind:is-visible="isModalVisible"
+      v-on:close="hideModal"
+      v-on:login-success="handleLoginSuccess"
     />
   </div>
 </template>

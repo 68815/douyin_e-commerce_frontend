@@ -5,25 +5,45 @@
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
+  min-height: 100vh;
 }
 
-a,
-.green {
+a {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
+  color: #ff416c;
+  transition: all 0.3s ease;
   padding: 3px;
+  position: relative;
+}
+
+a:hover {
+  color: #2c3e50;
+  transform: scale(1.05);
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #ff416c, #ff4b2b);
+  transition: width 0.3s ease;
+}
+
+a:hover::after {
+  width: 100%;
 }
 
 @media (hover: hover) {
   a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+    background-color: rgba(255, 65, 108, 0.1);
   }
 }
 
 @media (min-width: 1024px) {
   #app {
-    /* 移除了display: grid和grid-template-columns样式 */
     padding: 0 2rem;
   }
 }
